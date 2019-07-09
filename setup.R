@@ -7,7 +7,7 @@ library(ROracle)
 
 drv <- dbDriver("Oracle")
 connect.string <- paste("(DESCRIPTION_LIST=(FAILOVER=on)(LOAD_BALANCE=off)   (DESCRIPTION=(LOAD_BALANCE=on)(RETRY_COUNT=3) (ADDRESS=(PROTOCOL=tcp)(HOST=ok700p-scan)(PORT=1521))   (CONNECT_DATA=(SERVICE_NAME=ALCZR)))   (DESCRIPTION=(LOAD_BALANCE=on)(RETRY_COUNT=3) (ADDRESS=(PROTOCOL=tcp)(HOST=op700p-scan)(PORT=1521))   (CONNECT_DATA=(SERVICE_NAME=ALCZR))))")
-con <- dbConnect(drv = drv, username='17WENL', password='wen27march',dbname=connect.string)
+con <- dbConnect(drv = drv, username='XXX', password='XXXX',dbname=connect.string)
 
 
 

@@ -1,0 +1,181 @@
+---
+title: "Brightline Insights"
+output:
+  html_document:
+    css: resources/report.css
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+  word_document:
+    toc: yes
+    toc_depth: '4'
+---
+
+
+```{r global_options, include = FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE
+  ,message = FALSE
+  ,dev.args=list(bg="transparent")
+)
+```
+
+```{r setup, include=FALSE}
+
+library(RODBC)
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(scales)
+library(DT)
+library(knitr)
+library(tidyr)
+library(lubridate)
+library(plotly)
+
+set.seed(12345)
+
+setwd('C:/Brightline')
+
+###Load theme and conn functions
+#source("rprogs/setup.R")
+
+###Source pre-processed dataset (change me)
+
+#source("rprogs/raw_data_load.R")
+#source("rprogs/preprocessing.R")
+
+scale_colour <- function(..., values) {
+  # ggplot2:::manual_scale("colour", values = c("#588D97", "#F47C20", "#414258", "#315259", "#262638"), ...)
+  ggplot2:::manual_scale("colour", values = c("#262638", rep("#BDBAC0",10)), ...)
+}
+
+scale_fill <- function(..., values) {
+  # ggplot2:::manual_scale("fill", values = c("#588D97", "#F47C20", "#414258", "#315259", "#262638"), ...)
+  ggplot2:::manual_scale("fill", values = c("#262638", rep("#BDBAC0",10)), ...)
+}
+
+
+load(file="analysis_dataset.RData")
+
+```
+
+
+```{r outcomes, include=FALSE}
+
+###Read functions and scripts
+source("rprogs/rmd_functions.R")
+
+###Read in outcome chunk functions
+source("rprogs/rmd_outcome_chunks.R")
+
+```
+
+## Introduction 
+
+### Population
+
+
+All data in this report are from Jan 2019 - May 2019 (using Property Data). This is the most up to date information available in ALCZR in 2019.
+
+### Seeing the whole population
+
+IRD's Property Team requires a holistic view of brightline customers. 
+
+### Ask more questions
+
+This report provides descriptive, aggregate statitsics. These statstistics provide insight into the type of information available about different populations. By themselves they are not sufficient to make decisions. We encourage readers to use this report to generate more interesting and useful questions of the data.
+
+### Using data responsibly
+
+The statistics in this report do not imply causality. Just because two data insights follow a similar trend doesn't mean that they are directly related to on another; other factors may be at play and we need to be aware of them before assuming relationships between variables are causal.
+
+
+## Characteristics
+
+
+### Monthly distributions
+
+This shows the total transactions in comparison with the transactions deemed as brightline based on current filters 
+
+```{r month, echo = FALSE}
+bl_chunk()$plot
+bl_chunk()$table
+
+```
+
+
+### Major City Breakdowns overall
+
+Here is the comparison of sales between the Brightline population in comparison with all transactions
+
+```{r city, echo = FALSE}
+
+city_chunk()$plot
+city_chunk()$table
+
+```
+
+### Brightline sales duration
+Looking at the difference in the brightline transaction which seem to have a shorter turn around time to sale in comparison with all transactions - can this be due to mainly developers?
+
+```{r duration, echo = FALSE}
+duration_chunk()
+```
+
+### Brightline number of transactions by IRD number
+Is there a difference between individual sellers in the number of trasnactions made - there is a slight increase between 4-10 houses for Brightline
+```{r , echo = FALSE}
+replicate_chunk()$plot
+replicate_chunk()$table
+
+```
+
+### SQL Code used
+```{sql,eval=FALSE}
+select DISTINCT
+b.TITLE_NO,
+d.title_SK,
+b.title_type,
+CASE WHEN e.building_name = 'Not applicable' THEN '' ELSE e.building_name end as building_name,
+TRIM(e.address||' '||e.suburb||' '||e.town) as Address,
+e.town as city,
+a.seller_ird_number as ird_number, 
+c.PERIOD_START AS PURCHASE_DATE, 
+a.seller_instr_nbr AS inst_no ,
+a.seller_settlement_date AS SALE_DATE, 
+a.seller_non_resident_flag AS non_resident_flag,
+f.land_use_desc
+FROM property.pd_tax_stmt_owner a
+JOIN PROPERTY.PD_TITLE_OWNERSHIP_PERIOD c
+ON a.seller_instr_id = c.next_instr_id
+JOIN PROPERTY.PD_TOP_OWNER aa
+ON c.top_sk = aa.TOP_SK
+AND aa.owner_sk = a.owner_sk
+LEFT JOIN PROPERTY.PD_TITLE_OWNERSHIP_PERIOD d
+ON c.next_instr_id = d.instr_id
+LEFT JOIN property.pd_title b
+ON d.title_sk= b.title_sk
+LEFT JOIN PROPERTY.PD_PROPERTY_ADDRESS e
+ON d.TITLE_SK = e.title_sk
+LEFT JOIN PROPERTY.PD_PROPERTY_HISTORY f
+ON b.qpid = f.qpid
+AND f.CURRENT_FLAG = 'Y'
+WHERE
+a.seller_settlement_date  BETWEEN TO_DATE('01/01/2019','dd/mm/yy') AND TO_DATE('31/05/2019','dd/mm/yy')
+AND a.SELLER_EXEMPTION_CODE IS NULL
+AND (a.seller_settlement_date-c.PERIOD_START) < 730
+AND c.NOTIONAL_TRANSFER_IND = 'N' 
+AND d.NOTIONAL_TRANSFER_IND = 'N'
+AND c.event_type_sk = 3
+AND d.event_type_sk = 3 
+AND
+(f.property_type = 'Residential' 
+OR f.land_use_desc LIKE '%Residential'
+OR f.land_use_desc LIKE '%Lifestyle')
+```
+
+### IRD tracking number
+
+`IRD-2019-0310`
+

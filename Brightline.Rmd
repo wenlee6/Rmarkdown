@@ -1,5 +1,6 @@
 ---
 title: "Brightline Insights"
+author: "Wen Lee"
 output:
   html_document:
     css: resources/report.css
